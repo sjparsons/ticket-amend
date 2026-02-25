@@ -1,0 +1,12 @@
+{
+  "name": "ticket-amend",
+  "version": "1.0.0",
+  "description": "Amend existing tickets - plugin for tk (ticket)",
+  "bin": {
+    "ticket-amend": "./bin/ticket-amend.js"
+  },
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'"
+  },
+  "license": "MIT"
+}
