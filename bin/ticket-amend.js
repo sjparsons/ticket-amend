@@ -26,6 +26,8 @@ Options:
   --external-ref REF        Set external reference
   --parent ID               Set parent ticket
   --tags TAG1,TAG2          Append tags
+  --set KEY=VALUE           Set any frontmatter field (repeatable)
+  --append KEY=VALUE        Append to any list field (repeatable)
   -h, --help                Show this help`;
   console.log(usage);
   process.exit(0);
@@ -39,6 +41,17 @@ let assignee = null;
 let externalRef = null;
 let parent = null;
 let tags = null;
+const sets = [];
+const appends = [];
+
+function parseKeyValue(arg, flag) {
+  const eq = arg.indexOf('=');
+  if (eq === -1) {
+    console.error(`Error: ${flag} requires KEY=VALUE format`);
+    process.exit(1);
+  }
+  return { key: arg.slice(0, eq), value: arg.slice(eq + 1) };
+}
 
 for (let i = 0; i < args.length; i++) {
   switch (args[i]) {
@@ -56,6 +69,10 @@ for (let i = 0; i < args.length; i++) {
       parent = args[++i]; break;
     case '--tags':
       tags = args[++i]; break;
+    case '--set':
+      sets.push(parseKeyValue(args[++i], '--set')); break;
+    case '--append':
+      appends.push(parseKeyValue(args[++i], '--append')); break;
     default:
       if (args[i].startsWith('-')) {
         console.error(`Unknown option: ${args[i]}`);
@@ -216,6 +233,28 @@ if (tags !== null) {
     if (!existingTags.includes(t)) existingTags.push(t);
   }
   setField('tags', `[${existingTags.join(', ')}]`);
+  changed = true;
+}
+
+// Apply --set flags (replace arbitrary frontmatter fields)
+for (const { key, value } of sets) {
+  setField(key, value);
+  changed = true;
+}
+
+// Apply --append flags (append to list-style frontmatter fields)
+for (const { key, value: raw } of appends) {
+  const existing = getField(key);
+  let items = [];
+  if (existing) {
+    const cleaned = existing.replace(/^\[|\]$/g, '');
+    items = cleaned.split(',').map((t) => t.trim()).filter(Boolean);
+  }
+  const newItems = raw.split(',').map((t) => t.trim()).filter(Boolean);
+  for (const item of newItems) {
+    if (!items.includes(item)) items.push(item);
+  }
+  setField(key, `[${items.join(', ')}]`);
   changed = true;
 }
 

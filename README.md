@@ -31,11 +31,13 @@ All options are optional. Partial ticket IDs work (e.g. `tk amend 5c4` matches `
 | `--external-ref REF` | | Replace external reference (e.g. `gh-123`) |
 | `--parent ID` | | Replace parent ticket (supports partial IDs) |
 | `--tags TAG1,TAG2` | | Append tags (duplicates are skipped) |
+| `--set KEY=VALUE` | | Replace any frontmatter field (repeatable) |
+| `--append KEY=VALUE` | | Append to any list field (repeatable) |
 
 ### Append vs replace
 
-- **Description** and **tags** append to existing values.
-- Everything else replaces the current value.
+- **Description**, **tags**, and **`--append`** append to existing values.
+- Everything else (including **`--set`**) replaces the current value.
 
 ### Examples
 
@@ -54,6 +56,24 @@ tk amend 5c4 --parent abc --external-ref JIRA-456
 
 # Do it all at once
 tk amend 5c4 -t bug -p 0 -a "Jane" -d "Details" --tags "critical"
+```
+
+### Arbitrary frontmatter
+
+Use `--set` and `--append` to modify any frontmatter field, including custom ones:
+
+```bash
+# Set a custom field
+tk amend 5c4 --set design="Use a queue-based approach"
+
+# Replace multiple fields at once
+tk amend 5c4 --set status=closed --set priority=0
+
+# Append to a list field
+tk amend 5c4 --append deps=other-ticket-id
+
+# Mix with shorthand flags
+tk amend 5c4 -t bug --set custom-field="some value"
 ```
 
 ## Directory resolution

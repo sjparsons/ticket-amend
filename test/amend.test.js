@@ -325,6 +325,82 @@ describe('ticket-amend', () => {
     });
   });
 
+  describe('--set (arbitrary replace)', () => {
+    it('sets a new custom field', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      run(ticketsDir, ['ab-1234', '--set', 'custom-field=hello']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields['custom-field'], 'hello');
+    });
+
+    it('replaces an existing field', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      run(ticketsDir, ['ab-1234', '--set', 'status=closed']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.status, 'closed');
+    });
+
+    it('supports multiple --set flags', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      run(ticketsDir, ['ab-1234', '--set', 'type=epic', '--set', 'priority=0']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.type, 'epic');
+      assert.equal(fields.priority, '0');
+    });
+
+    it('handles values containing equals signs', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      run(ticketsDir, ['ab-1234', '--set', 'note=a=b=c']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.note, 'a=b=c');
+    });
+
+    it('errors on missing equals sign', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      const { stderr, status } = runFail(ticketsDir, ['ab-1234', '--set', 'noequals']);
+      assert.match(stderr, /KEY=VALUE/);
+      assert.notEqual(status, 0);
+    });
+  });
+
+  describe('--append (arbitrary append)', () => {
+    it('appends to an existing list field', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket({ tags: ['backend'] }));
+      run(ticketsDir, ['ab-1234', '--append', 'tags=frontend,urgent']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.tags, '[backend, frontend, urgent]');
+    });
+
+    it('creates a new list field if not present', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      run(ticketsDir, ['ab-1234', '--append', 'deps=dep-1,dep-2']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.deps, '[dep-1, dep-2]');
+    });
+
+    it('deduplicates when appending', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket({ tags: ['api', 'backend'] }));
+      run(ticketsDir, ['ab-1234', '--append', 'tags=api,new']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.tags, '[api, backend, new]');
+    });
+
+    it('supports multiple --append flags', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      run(ticketsDir, ['ab-1234', '--append', 'tags=a', '--append', 'links=x']);
+      const { fields } = parseFrontmatter(readTicket(ticketsDir, 'ab-1234'));
+      assert.equal(fields.tags, '[a]');
+      assert.equal(fields.links, '[x]');
+    });
+
+    it('errors on missing equals sign', () => {
+      writeTicket(ticketsDir, 'ab-1234', makeTicket());
+      const { stderr, status } = runFail(ticketsDir, ['ab-1234', '--append', 'noequals']);
+      assert.match(stderr, /KEY=VALUE/);
+      assert.notEqual(status, 0);
+    });
+  });
+
   describe('directory ascending', () => {
     it('finds .tickets in parent directory when cwd is a subdirectory', () => {
       // tmp/.tickets/ab-1234.md exists, cwd is tmp/sub/deep

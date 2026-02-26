@@ -49,7 +49,9 @@ Description text here.
 
 - **Description** (`-d`): appends to the markdown body after the frontmatter.
 - **Tags** (`--tags`): appends to the existing tag list, skipping duplicates.
-- **All other fields** (`-t`, `-p`, `-a`, `--external-ref`, `--parent`): replace the current value in frontmatter.
+- **All other shorthand fields** (`-t`, `-p`, `-a`, `--external-ref`, `--parent`): replace the current value in frontmatter.
+- **`--set KEY=VALUE`**: replaces any arbitrary frontmatter field. Repeatable.
+- **`--append KEY=VALUE`**: appends to any list-style frontmatter field (comma-separated, with deduplication). Repeatable.
 - **Partial ID matching**: ticket IDs can be shortened (e.g. `5c4` matches `nw-5c46`). Ambiguous matches are rejected.
 - **Parent resolution**: the `--parent` value is also resolved via partial ID matching.
 
